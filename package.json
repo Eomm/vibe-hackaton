@@ -1,0 +1,21 @@
+{
+  "name": "vibe-hackaton",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^6.2.0"
+  },
+  "dependencies": {
+    "cannon-es": "^0.20.0",
+    "dotenv": "^16.4.7",
+    "openai": "^4.93.0",
+    "three": "^0.175.0",
+    "vite-plugin-env-compatible": "^2.0.1"
+  }
+}
