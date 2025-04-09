@@ -1,7 +1,4 @@
 import './style.css'
-import javascriptLogo from './javascript.svg'
-import viteLogo from '/vite.svg'
-import { setupCounter } from './counter.js'
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import * as CANNON from 'cannon-es';
@@ -162,13 +159,13 @@ const mouse = new THREE.Vector2();
 let selectedBody = null;
 let initialMousePosition = new THREE.Vector2();
 
-// Function to display the result on the screen
+// Update the displayResult function to ensure proper centering
 function displayResult (userChoice, aiChoice, result) {
   const resultContainer = document.createElement('div');
-  resultContainer.style.position = 'absolute';
+  resultContainer.style.position = 'fixed'; // Use fixed positioning for consistent centering
   resultContainer.style.top = '50%';
   resultContainer.style.left = '50%';
-  resultContainer.style.transform = 'translate(-50%, -50%)';
+  resultContainer.style.transform = 'translate(-50%, -50%)'; // Center the element
   resultContainer.style.textAlign = 'center';
   resultContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
   resultContainer.style.color = 'white';
@@ -181,7 +178,7 @@ function displayResult (userChoice, aiChoice, result) {
   resultContainer.appendChild(resultText);
 
   const choicesText = document.createElement('p');
-  choicesText.textContent = `${userChoice.toUpperCase()} VS ${aiChoice.toUpperCase()}`;
+  choicesText.textContent = `🕹️ ${userChoice.toUpperCase()} VS ${aiChoice.toUpperCase()} 🤖`;
   resultContainer.appendChild(choicesText);
 
   document.body.appendChild(resultContainer);
@@ -279,6 +276,21 @@ window.addEventListener('mouseup', async (event) => {
   }
 });
 
+// Add a flag to toggle wireframe visibility
+let showWireframes = !true; // Set to false to hide wireframes
+
+// Update wireframe visibility based on the flag
+function updateWireframeVisibility () {
+  rockBoundingBoxHelper.visible = showWireframes;
+  if (sphereMesh) sphereMesh.visible = showWireframes;
+
+  paperBoundingBoxHelper.visible = showWireframes;
+  if (paperSphereMesh) paperSphereMesh.visible = showWireframes;
+
+  scissorsBoundingBoxHelper.visible = showWireframes;
+  if (scissorsSphereMesh) scissorsSphereMesh.visible = showWireframes;
+}
+
 // Synchronize physics and graphics
 function updatePhysics () {
   world.step(1 / 60);
@@ -317,28 +329,9 @@ function animate () {
   requestAnimationFrame(animate);
   updatePhysics();
   updateHelpers(); // Synchronize helpers
+  updateWireframeVisibility(); // Update wireframe visibility
   controls.update();
   renderer.render(scene, camera);
 }
 
 animate();
-
-// document.querySelector('#app').innerHTML = `
-//   <div>
-//     <a href="https://vite.dev" target="_blank">
-//       <img src="${viteLogo}" class="logo" alt="Vite logo" />
-//     </a>
-//     <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript" target="_blank">
-//       <img src="${javascriptLogo}" class="logo vanilla" alt="JavaScript logo" />
-//     </a>
-//     <h1>Hello Vite!</h1>
-//     <div class="card">
-//       <button id="counter" type="button"></button>
-//     </div>
-//     <p class="read-the-docs">
-//       Click on the Vite logo to learn more
-//     </p>
-//   </div>
-// `
-
-// setupCounter(document.querySelector('#counter'))
