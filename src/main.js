@@ -5,6 +5,13 @@ import { setupCounter } from './counter.js'
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls';
 import * as CANNON from 'cannon-es';
+import OpenAI from 'openai';
+
+// OpenAI API setup
+const openai = new OpenAI({
+  apiKey: import.meta.env.VITE_OPENAI_API_KEY, // Use Vite's import.meta.env for environment variables
+  dangerouslyAllowBrowser: true,
+});
 
 // Scene setup
 const scene = new THREE.Scene();
@@ -155,6 +162,48 @@ const mouse = new THREE.Vector2();
 let selectedBody = null;
 let initialMousePosition = new THREE.Vector2();
 
+// Function to display the result on the screen
+function displayResult (userChoice, aiChoice, result) {
+  const resultContainer = document.createElement('div');
+  resultContainer.style.position = 'absolute';
+  resultContainer.style.top = '50%';
+  resultContainer.style.left = '50%';
+  resultContainer.style.transform = 'translate(-50%, -50%)';
+  resultContainer.style.textAlign = 'center';
+  resultContainer.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+  resultContainer.style.color = 'white';
+  resultContainer.style.padding = '20px';
+  resultContainer.style.borderRadius = '10px';
+  resultContainer.style.zIndex = '1000';
+
+  const resultText = document.createElement('h1');
+  resultText.textContent = result;
+  resultContainer.appendChild(resultText);
+
+  const choicesText = document.createElement('p');
+  choicesText.textContent = `${userChoice.toUpperCase()} VS ${aiChoice.toUpperCase()}`;
+  resultContainer.appendChild(choicesText);
+
+  document.body.appendChild(resultContainer);
+
+  setTimeout(() => {
+    document.body.removeChild(resultContainer);
+  }, 3000); // Remove the result after 3 seconds
+}
+
+// Function to determine the winner
+function determineWinner (userChoice, aiChoice) {
+  if (userChoice === aiChoice) return 'DRAW';
+  if (
+    (userChoice === 'rock' && aiChoice === 'scissors') ||
+    (userChoice === 'paper' && aiChoice === 'rock') ||
+    (userChoice === 'scissors' && aiChoice === 'paper')
+  ) {
+    return 'YOU WIN';
+  }
+  return 'YOU LOSE';
+}
+
 // Event listener for mouse down (start dragging)
 window.addEventListener('mousedown', (event) => {
   mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
@@ -171,6 +220,7 @@ window.addEventListener('mousedown', (event) => {
 
     if (selectedBody) {
       initialMousePosition.set(event.clientX, event.clientY);
+      controls.enabled = false; // Disable camera movement
     }
   }
 });
@@ -189,7 +239,7 @@ window.addEventListener('mousemove', (event) => {
 });
 
 // Event listener for mouse up (release and apply force)
-window.addEventListener('mouseup', (event) => {
+window.addEventListener('mouseup', async (event) => {
   if (selectedBody) {
     const force = new CANNON.Vec3(
       (event.clientX - initialMousePosition.x) * 0.1, // Force based on mouse movement
@@ -197,7 +247,35 @@ window.addEventListener('mouseup', (event) => {
       (event.clientY - initialMousePosition.y) * 0.1
     );
     selectedBody.applyImpulse(force, selectedBody.position);
+
+    // Determine user choice
+    let userChoice;
+    if (selectedBody === rockBody) userChoice = 'rock';
+    else if (selectedBody === paperBody) userChoice = 'paper';
+    else if (selectedBody === scissorsBody) userChoice = 'scissors';
+
+    // Call OpenAI API to get AI choice
+    try {
+      const response = await openai.chat.completions.create({
+        model: 'gpt-3.5-turbo',
+        messages: [
+          { role: 'system', content: 'Choose one of rock, paper, or scissors randomly. Answer with just one string.' },
+        ],
+      });
+
+      const aiChoice = response.choices[0].message.content.trim().toLowerCase();
+
+      // Determine the result
+      const result = determineWinner(userChoice, aiChoice);
+
+      // Display the result
+      displayResult(userChoice, aiChoice, result);
+    } catch (error) {
+      console.error('Error calling OpenAI API:', error);
+    }
+
     selectedBody = null;
+    controls.enabled = true; // Re-enable camera movement
   }
 });
 
